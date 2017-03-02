@@ -5,7 +5,7 @@
   :author "Will Langstroth <will@langstroth.com>"
   :license "MIT"
   :serial t
-  :depends-on (#:st-json
+  :depends-on (#:jonathan
                #:drakma
                #:passage)
   :components ((:file "package")

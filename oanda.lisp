@@ -26,42 +26,41 @@
    url
    :additional-headers `(("Authorization" . ,(auth-bearer)))))
 
-(defun price-of (instrument &optional (bid-or-ask "bid"))
-  "SBCL complains unless bid-or-ask is coerced"
-  (st-json:getjso* (coerce bid-or-ask 'string)
-                   (first (prices instrument))))
+(defun price-of (instrument &optional (bid-or-ask :|bid|))
+  (getf (prices instrument) bid-or-ask))
 
 (defun prices (instrument)
-  (st-json:getjso
-   "prices"
-   (st-json:read-json
-    (oanda-request
-     (price-url-of instrument)))))
+  (first
+   (getf
+    (jonathan:parse
+     (oanda-request
+      (price-url-of instrument)))
+    :|prices|)))
 
 (defun trades ()
-  (st-json:getjso
-   "trades"
-   (st-json:read-json
-    (oanda-request *trades-url*))))
+  (getf
+   (jonathan:parse
+    (oanda-request *trades-url*))
+   :|trades|))
 
 (defun side-factor (side)
   (cond ((string= side "sell") -1)
                (t 1)))
 
-(defun euro-price (&optional (bid-or-ask "bid"))
+(defun euro-price (&optional (bid-or-ask :|bid|))
   (price-of "EUR_USD" bid-or-ask))
 
-(defun show-trade (trade-obj)
+(defun show-trade (trade-plist)
   (let*
-      ((name (st-json:getjso* "instrument" trade-obj))
-       (units (st-json:getjso* "units" trade-obj))
-       (trade-price (st-json:getjso* "price" trade-obj))
-       (side (st-json:getjso* "side" trade-obj))
-       (trade-time (subseq (st-json:getjso* "time" trade-obj) 0 16))
+      ((name (getf trade-plist :|instrument|))
+       (units (getf trade-plist :|units|))
+       (trade-price (getf trade-plist :|price|))
+       (side (getf trade-plist :|side|))
+       (trade-time (subseq (getf trade-plist :|time|) 0 16))
        (price
         (cond
-          ((string= side "sell") (price-of name "ask"))
-          (t (price-of name "bid"))))
+          ((string= side "sell") (price-of name :|ask|))
+          (t (price-of name :|bid|))))
        (adjustment-factor
         (cond
           ((string= (subseq name 0 3) "USD") price)
@@ -82,20 +81,21 @@
             trade-price
             pl-string)))
 
+
 (defun show-trades ()
-  (format t "~a~%" (iso-now))
+  (format t "~a~%" (passage:iso-now))
   (loop for trade in (trades)
      do (show-trade trade)))
 
 (defun account ()
-  (st-json:read-json
+  (jonathan:parse
    (oanda-request *account-url*)))
 
 (defun account-summary ()
   nil)
 
 (defun balance ()
-  (st-json:getjso* "balance" (account)))
+  (getf (account) :|balance|))
 
 (defparameter *position-factor* 0.025)
 
@@ -103,31 +103,11 @@
   (* (balance) size))
 
 (defun profit-loss ()
-  (format t "~%P/L: ~a"
-          (st-json:getjso*
-           "unrealizedPl"
-           (account))))
+  (getf (account) :|unrealizedPl|))
+
+(defun show-pl ()
+  (format t "~%P/L: ~$" (profit-loss)))
 
 (defun trade-status ()
   (show-trades)
-  (profit-loss))
-
-(defun instrument-url (instrument field)
-"
-The query string only accepts one instrument and field for some reason.
-*default-account* is in the secrets file
-"
-  (concatenate 'string
-               *base-url*
-               "instruments?"
-               "accountId="
-               *default-account*
-               "&instruments="
-               instrument
-               "&fields="
-               field
-               ))
-
-(defun instrument-data (&optional (instrument "EUR_USD") (field "marginRate"))
-  (st-json:read-json
-   (oanda-request (instrument-url instrument field))))
+  (show-pl))
