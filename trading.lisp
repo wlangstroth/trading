@@ -23,7 +23,6 @@
     :loonie ""
     :yen ""
     :sugar "03:00-13:00"
-    :silver ""
     :soybeans "20:00-08:45, 9:30-15:15"))
 
 (defun trading-hours (&optional instrument)

@@ -7,7 +7,8 @@
   :serial t
   :depends-on (#:jonathan
                #:drakma
-               #:passage)
+               #:dexador
+               #:chronograph)
   :components ((:file "package")
                (:file "oanda")
                (:file "backtest")

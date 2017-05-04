@@ -81,9 +81,8 @@
             trade-price
             pl-string)))
 
-
 (defun show-trades ()
-  (format t "~a~%" (passage:iso-now))
+  (format t "~a~%" (chronograph:iso-now))
   (loop for trade in (trades)
      do (show-trade trade)))
 
@@ -97,7 +96,7 @@
 (defun balance ()
   (getf (account) :|balance|))
 
-(defparameter *position-factor* 0.025)
+(defparameter *position-factor* 0.03)
 
 (defun position-size (&optional (size *position-factor*))
   (* (balance) size))
@@ -111,3 +110,6 @@
 (defun trade-status ()
   (show-trades)
   (show-pl))
+
+(defun instrument-interest (instruments)
+  (oanda-request (price-url-of instruments)))
